@@ -36,7 +36,7 @@ func main() {
 
 	v1Router := chi.NewRouter()
 
-	v1Router.HandleFunc("/healthz", handlerReadiness) // full path ... /v1/ready ... to cater for breaking changes for our REST API
+	v1Router.Get("/healthz", handlerReadiness) // full path ... /v1/ready ... to cater for breaking changes for our REST API ... changing from .HandleFunc() to .Get() scopes our handler to only fire on get requests
 
 	router.Mount("/v1", v1Router)
 

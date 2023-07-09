@@ -6,6 +6,24 @@ import (
 	"net/http"
 )
 
+func respondWithError(w http.ResponseWriter, code int, msg string) { // format message into a consistent json everytime
+	if code > 499 { // logging a message with server errors ... this means we have a bug on our end
+		log.Println("Responding with 5XX error: ", msg)
+	}
+	type errResponse struct { // So below we have an error field with an error key.
+		Error string `json:"error"` // here we are saying the key that this should marshall to is error ... we're specifying how we want that json.marshall and json.umarshall to convert the struct to a marshall object
+	}
+
+	// Looks like something like this
+	// {
+	// 	"error": "something went wrong"
+	// }
+
+	respondWithJSON(w, code, errResponse{
+		Error: msg,
+	}) // responding with a specific structure
+}
+
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	// 1. http handlers in go use this write
 	// 2. status code to respond with
