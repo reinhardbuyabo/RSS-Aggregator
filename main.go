@@ -36,6 +36,11 @@ func main() {
 		MaxAge:           300,
 	}))
 
+	v1Router := chi.NewRouter()                       // to mount on line 42 ... to slash v1 ... /v1
+	v1Router.HandleFunc("/healthz", handlerReadiness) // connecting path to the function in handler_readiness ...
+
+	router.Mount("/v1", v1Router)
+
 	srv := &http.Server{
 		Handler: router,
 		Addr:    ":" + portString,
