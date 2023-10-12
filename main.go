@@ -36,8 +36,11 @@ func main() {
 		MaxAge:           300,
 	}))
 
-	v1Router := chi.NewRouter()                       // to mount on line 42 ... to slash v1 ... /v1
-	v1Router.HandleFunc("/healthz", handlerReadiness) // connecting path to the function in handler_readiness ...
+	// Respond if the server is alive and running
+
+	v1Router := chi.NewRouter()                // to mount on line 42 ... to slash v1 ... /v1
+	v1Router.Get("/healthz", handlerReadiness) // connecting path to the function in handler_readiness ...
+	v1Router.Get("/err", handlerErr)
 
 	router.Mount("/v1", v1Router)
 
