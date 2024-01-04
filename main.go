@@ -71,6 +71,7 @@ func main() {
 	v1Router.Get("/healthz", handlerReadiness) // connecting path to the function in handler_readiness ... // full path /v1/healthz
 	v1Router.Get("/err", handlerErr)
 	v1Router.Post("/users", apiCfg.handlerCreateUser)
+	v1Router.Get("/users", apiCfg.handleGetUser)
 
 	router.Mount("/v1", v1Router)
 

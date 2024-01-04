@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/reinhardbuyabo/RSS-Aggregator/internal/auth"
 	"github.com/reinhardbuyabo/RSS-Aggregator/internal/database"
 )
 
@@ -53,5 +54,22 @@ func (apiCfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Reques
 	// 2. Pointer to http request
 	// from json.go
 
-	respondWithJSON(w, 200, databaseUserToUser(user)) // passing writer, responding with 200, and some reponse payload, ... , empty struct marshalls to JSON
+	respondWithJSON(w, 201, databaseUserToUser(user)) // passing writer, responding with 200, and some reponse payload, ... , empty struct marshalls to JSON
+}
+
+// This is an authenticated endpoint
+func (apiCfg *apiConfig) handleGetUser(w http.ResponseWriter, r *http.Request) {
+	apiKey, err := auth.GetAPIKey(r.Header)
+	if err != nil {
+		respondWithError(w, 403, fmt.Sprintf("Auth error: %v", err))
+	}
+
+	// 1. Request's Context - Context Package in the go standard library, it gives you a way to track some thing that is happening in multiple go routines ... you can cancel Context, effectively killing a http Request
+	// 2. apiKey
+	user, err := apiCfg.DB.GetUserByAPIKey(r.Context(), apiKey)
+	if err != nil {
+		respondWithError(w, 400, fmt.Sprintf("Couldn't get user: %v", err))
+	}
+
+	respondWithJSON(w, 200, databaseUserToUser(user))
 }
