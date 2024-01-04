@@ -21,10 +21,15 @@ func respondWithError(w http.ResponseWriter, code int, msg string) {
 }
 
 func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+	// 1. Response Writer
+	// 2. Status Code
+	// 3. Interface: sth we can marshall to json struct
 	// payload: sth we can marshall to json struct ...
 
+	// attempt to marshall whatever its given into a JSON string and returns it as bytes
 	data, err := json.Marshal(payload) // return as bytes ... binary format
 
+	// if sth goes wrong ...
 	if err != nil {
 		log.Printf("Failed to marshal JSON response: %v", payload)
 		w.WriteHeader(500) // internal server error

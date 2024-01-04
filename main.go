@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,7 +10,14 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
+	"github.com/reinhardbuyabo/RSS-Aggregator/internal/database"
 )
+
+// 1. apiConfig that we can pass to our handler and then connect to our database
+type apiConfig struct {
+	DB *database.Queries
+}
 
 func main() {
 	fmt.Println("Hello World")
@@ -22,6 +30,24 @@ func main() {
 
 	if portString == "" {
 		log.Fatal("PORT is not found in the environment")
+	}
+
+	// importing database driver
+	dbURL := os.Getenv("DB_URL")
+	if dbURL == "" {
+		log.Fatal("DB_URL is not found in the environment")
+	}
+
+	conn, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatal("Can't connect to database:", err)
+	}
+
+	// passing connection to database.New();
+	queries := database.New(conn)
+
+	apiCfg := apiConfig{
+		DB: queries,
 	}
 
 	router := chi.NewRouter()
@@ -38,9 +64,13 @@ func main() {
 
 	// Respond if the server is alive and running
 
+	// v1Router := chi.NewRouter();
+	// v1Router.HandleFunc()
+
 	v1Router := chi.NewRouter()                // to mount on line 42 ... to slash v1 ... /v1
-	v1Router.Get("/healthz", handlerReadiness) // connecting path to the function in handler_readiness ...
+	v1Router.Get("/healthz", handlerReadiness) // connecting path to the function in handler_readiness ... // full path /v1/healthz
 	v1Router.Get("/err", handlerErr)
+	v1Router.Post("/users", apiCfg.handlerCreateUser)
 
 	router.Mount("/v1", v1Router)
 
@@ -50,7 +80,7 @@ func main() {
 	}
 
 	log.Printf("Server starting on port %v", portString)
-	err := srv.ListenAndServe() // returns an error ... Nothing should ever be returned from server.
+	err = srv.ListenAndServe() // returns an error ... Nothing should ever be returned from server.
 
 	if err != nil {
 		log.Fatal(err)
