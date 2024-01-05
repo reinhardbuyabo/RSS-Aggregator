@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
@@ -20,6 +21,12 @@ type apiConfig struct {
 }
 
 func main() {
+	feed, err := urlToFeed("https://wagslane.dev/index.xml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(feed)
+
 	fmt.Println("Hello World")
 
 	// A way to read PORT into main.go ...
@@ -44,11 +51,13 @@ func main() {
 	}
 
 	// passing connection to database.New();
-	queries := database.New(conn)
+	db := database.New(conn)
 
 	apiCfg := apiConfig{
-		DB: queries,
+		DB: db,
 	}
+
+	go startScraping(db, 10, time.Minute) // calling it on a new go routine, so that it doesn't interrupt this main flow, NOTE: startScraping is a long running function[it has an infinite for loop on line 26]
 
 	router := chi.NewRouter()
 
@@ -70,10 +79,18 @@ func main() {
 	v1Router := chi.NewRouter()                // to mount on line 42 ... to slash v1 ... /v1
 	v1Router.Get("/healthz", handlerReadiness) // connecting path to the function in handler_readiness ... // full path /v1/healthz
 	v1Router.Get("/err", handlerErr)
+
 	v1Router.Post("/users", apiCfg.handlerCreateUser)
 	// 1. Call the middlewareAuth function first 2. Get User By Api Key(middleware_auth.go) 3. Get API Key (auth.go) which returns apiKey of user(middleware_auth.go) 4. We Query the database using the gotten apiKey (GetUserByAPIKey()) and pass the resulted row, gotten user to our handler function in handler_user.go (middleware_auth.go)
 	v1Router.Get("/users", apiCfg.middlewareAuth(apiCfg.handleGetUser)) // cannot use apiCfg.handleGetUser (value of type func(w http.ResponseWriter, r *http.Request, user database.User)) as http.HandleFunc value in argument to v1Router.Get
+
 	v1Router.Post("/feeds", apiCfg.middlewareAuth(apiCfg.handleCreateFeed))
+	v1Router.Get("/feeds", apiCfg.handlerGetFeeds)
+
+	v1Router.Post("/feed_follows", apiCfg.middlewareAuth(apiCfg.handlerCreateFeedFollow))
+	v1Router.Get("/feed_follows", apiCfg.middlewareAuth(apiCfg.handlerGetFeedFollows))
+	// we want to dynamically pass the feed follow ID as a parameter to the URL
+	v1Router.Delete("/feed_follows/{feedFollowID}", apiCfg.middlewareAuth(apiCfg.handlerDeleteFeedFollow))
 
 	router.Mount("/v1", v1Router)
 

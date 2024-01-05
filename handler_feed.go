@@ -51,3 +51,14 @@ func (apiCfg *apiConfig) handleCreateFeed(w http.ResponseWriter, r *http.Request
 	// 3. Database Feed
 	respondWithJSON(w, 201, databaseFeedtoFeed(feed))
 }
+
+// Not an authenticated endpoint
+func (apiCfg *apiConfig) handlerGetFeeds(w http.ResponseWriter, r *http.Request) {
+	feeds, err := apiCfg.DB.GetFeeds(r.Context()) // doesn't take any parameters, just returns all the feeds
+	if err != nil {
+		respondWithError(w, 400, fmt.Sprintf("Couldn't Get Feeds: %v", err))
+		return
+	}
+
+	respondWithJSON(w, 200, databaseFeedstoFeeds(feeds))
+}
