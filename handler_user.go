@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/reinhardbuyabo/RSS-Aggregator/internal/auth"
 	"github.com/reinhardbuyabo/RSS-Aggregator/internal/database"
 )
 
@@ -51,25 +50,27 @@ func (apiCfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Reques
 	}
 
 	// 1. ResponseWriter
-	// 2. Pointer to http request
+	// 2. Status Code
+	// 3. Database User
 	// from json.go
 
 	respondWithJSON(w, 201, databaseUserToUser(user)) // passing writer, responding with 200, and some reponse payload, ... , empty struct marshalls to JSON
 }
 
 // This is an authenticated endpoint
-func (apiCfg *apiConfig) handleGetUser(w http.ResponseWriter, r *http.Request) {
-	apiKey, err := auth.GetAPIKey(r.Header)
-	if err != nil {
-		respondWithError(w, 403, fmt.Sprintf("Auth error: %v", err))
-	}
+func (apiCfg *apiConfig) handleGetUser(w http.ResponseWriter, r *http.Request, user database.User) { // handleGetUser() doesn't match the function signature of handleFunc, but matches the function signature of authedHandler hence we can't pass it as the 2nd parameter to v1Router.Get(), but we can pass it to middlewareAuth() which returns a http.HandlerFunc
+	// apiKey, err := auth.GetAPIKey(r.Header)
+	// if err != nil {
+	// 	respondWithError(w, 403, fmt.Sprintf("Auth error: %v", err))
+	// }
 
-	// 1. Request's Context - Context Package in the go standard library, it gives you a way to track some thing that is happening in multiple go routines ... you can cancel Context, effectively killing a http Request
-	// 2. apiKey
-	user, err := apiCfg.DB.GetUserByAPIKey(r.Context(), apiKey)
-	if err != nil {
-		respondWithError(w, 400, fmt.Sprintf("Couldn't get user: %v", err))
-	}
+	// // 1. Request's Context - Context Package in the go standard library, it gives you a way to track some thing that is happening in multiple go routines ... you can cancel Context, effectively killing a http Request
+	// // 2. apiKey
+	// user, err := apiCfg.DB.GetUserByAPIKey(r.Context(), apiKey)
+	// if err != nil {
+	// 	respondWithError(w, 400, fmt.Sprintf("Couldn't get user: %v", err))
+	// 	return
+	// }
 
 	respondWithJSON(w, 200, databaseUserToUser(user))
 }

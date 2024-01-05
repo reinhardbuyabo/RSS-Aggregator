@@ -11,6 +11,7 @@ import (
 // Example:
 // Authorization: ApiKey { insert apikey here }
 func GetAPIKey(headers http.Header) (string, error) {
+	// LOGIC
 	val := headers.Get("Authorization")
 	// you're not supposed to capitalize errors
 	if val == "" {

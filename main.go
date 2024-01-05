@@ -71,7 +71,9 @@ func main() {
 	v1Router.Get("/healthz", handlerReadiness) // connecting path to the function in handler_readiness ... // full path /v1/healthz
 	v1Router.Get("/err", handlerErr)
 	v1Router.Post("/users", apiCfg.handlerCreateUser)
-	v1Router.Get("/users", apiCfg.handleGetUser)
+	// 1. Call the middlewareAuth function first 2. Get User By Api Key(middleware_auth.go) 3. Get API Key (auth.go) which returns apiKey of user(middleware_auth.go) 4. We Query the database using the gotten apiKey (GetUserByAPIKey()) and pass the resulted row, gotten user to our handler function in handler_user.go (middleware_auth.go)
+	v1Router.Get("/users", apiCfg.middlewareAuth(apiCfg.handleGetUser)) // cannot use apiCfg.handleGetUser (value of type func(w http.ResponseWriter, r *http.Request, user database.User)) as http.HandleFunc value in argument to v1Router.Get
+	v1Router.Post("/feeds", apiCfg.middlewareAuth(apiCfg.handleCreateFeed))
 
 	router.Mount("/v1", v1Router)
 
